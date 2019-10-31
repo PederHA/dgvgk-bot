@@ -13,11 +13,7 @@ from discord.ext import commands
 
 from cogs.base_cog import BaseCog, EmbedField
 from config import TRUSTED_DIR, TRUSTED_PATH, YES_ARGS
-from utils.access_control import (Categories, add_trusted_member,
-                                  add_trusted_role, get_trusted_members,
-                                  get_trusted_roles, remove_trusted_member,
-                                  remove_trusted_role)
-from utils.checks import admins_only, load_blacklist, save_blacklist
+from utils.checks import admins_only
 from utils.exceptions import CommandError
 
 

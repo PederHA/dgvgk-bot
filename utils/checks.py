@@ -5,7 +5,6 @@ from config import (DGVGK_SERVER_ID, DOWNLOADS_ALLOWED, OWNER_ID,
                     PFM_SERVER_ID, TEST_SERVER_ID, BLACKLIST_PATH)
 from utils.caching import get_cached
 from utils.serialize import dump_json
-from utils.access_control import get_trusted_members
 
 
 # Decorator check
