@@ -26,7 +26,7 @@ class MinecraftCog(BaseCog):
         try:
             attr = getattr(server, attr)
             r = attr()
-        except (AttributeError, socket.gaierror): # lazy
+        except (AttributeError, socket.gaierror, socket.timeout): # lazy
             raise CommandError("Unable to connect to server")
         else:
             return r
