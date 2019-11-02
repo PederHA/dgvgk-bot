@@ -17,6 +17,7 @@ class MinecraftCog(BaseCog):
     """Minecraft Commands."""
 
     EMOJI = "<:mc:639190697186164756>"
+    HOME_COORDS = (-600, 80, 650)
 
     def _get_mc_server(self) -> mcstatus.MinecraftServer:
         return mcstatus.MinecraftServer(MC_SERVER_IP, MC_SERVER_PORT)
@@ -39,11 +40,13 @@ class MinecraftCog(BaseCog):
 
     @commands.group(name="mc")
     async def mc(self, ctx: commands.Context) -> None:
-        pass
+        if not ctx.invoked_subcommand:
+            cmd = self.bot.get_command("help")
+            await ctx.invoke(cmd, "mc")
 
     @mc.command(name="players")
     async def view_players(self, ctx: commands.Context) -> None:
-        """Posts online players on the server."""
+        """Online players on the server."""
         status = await self.get_server_status()
         players = status.players.sample
        
@@ -56,7 +59,7 @@ class MinecraftCog(BaseCog):
 
     @mc.command(name="plugins")
     async def query(self, ctx: commands.Context) -> None:
-        """Posts active plugins on the server."""
+        """Active plugins on the server."""
         query = await self.query_server()
         plugins = query.software.plugins
         
@@ -65,7 +68,13 @@ class MinecraftCog(BaseCog):
         
         msg_body = "\n".join([plugin for plugin in plugins])
         await self.send_embed_message(ctx, title="Active Plugins", description=msg_body)
-
+    
+    @mc.command(name="home", aliases=["base"])
+    async def home_coordinates(self, ctx: commands.Context) -> None:
+        """Coordinates of home base."""
+        c = self.HOME_COORDS
+        await ctx.send(f"X: {c[0]} / Y: {c[1]} / Z: {c[2]}")
+    
     async def server_status_str(self) -> str:
         """Unused rn. Pending removal tbqh"""
         try:
