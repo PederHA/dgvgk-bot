@@ -12,13 +12,13 @@ from utils.serialize import dump_json
 from utils.caching import get_cached
 
 CONF = "DGVGK/minecraft.json"
+HOME_COORDINATES = (-600, 80, 650)
 
 class MinecraftCog(BaseCog):
     """Minecraft Commands."""
 
     EMOJI = "<:mc:639190697186164756>"
-    HOME_COORDS = (-600, 80, 650)
-
+    
     def _get_mc_server(self) -> mcstatus.MinecraftServer:
         return mcstatus.MinecraftServer(MC_SERVER_IP, MC_SERVER_PORT)
     
@@ -72,8 +72,8 @@ class MinecraftCog(BaseCog):
     @mc.command(name="home", aliases=["base"])
     async def home_coordinates(self, ctx: commands.Context) -> None:
         """Coordinates of home base."""
-        c = self.HOME_COORDS
-        await ctx.send(f"X: {c[0]} / Y: {c[1]} / Z: {c[2]}")
+        x, y, z = HOME_COORDINATES
+        await ctx.send(f"X: {x} / Y: {y} / Z: {z}")
     
     async def server_status_str(self) -> str:
         """Unused rn. Pending removal tbqh"""
