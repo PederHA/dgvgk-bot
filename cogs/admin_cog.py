@@ -36,13 +36,15 @@ class Activity:
 
 
 class AdminCog(BaseCog):
+    """Admin commands for administering guild-related bot functionality."""
+    
     FILES = [TRUSTED_PATH]
 
     # Activity rotation stuff
     ACTIVITY_ROTATION = True
     AC_ROTATION_INTERVAL = 60
 
-    """Admin commands for administering guild-related bot functionality."""
+    
     @commands.Cog.listener()
     async def on_ready(self) -> None:
         """Sets activity and prints a message when cog is instantiated 
@@ -53,14 +55,20 @@ class AdminCog(BaseCog):
 
     async def run_activity_rotation(self) -> None:
         mc_cog = self.bot.get_cog("MinecraftCog")
-        acitivities = [
+        activities = [
             Activity(callable_=mc_cog.n_players_online),
         ]
 
-        while self.ACTIVITY_ROTATION: 
-            for activity in acitivities:
-                await self._change_activity(await activity.get_activity())
-                await asyncio.sleep(self.AC_ROTATION_INTERVAL)
+        while True: 
+            for activity in activities:
+                try:
+                    ac = await activity.get_activity()
+                    await self._change_activity(ac)
+                except:
+                    pass
+                finally:
+                    await asyncio.sleep(self.AC_ROTATION_INTERVAL)
+                
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
@@ -72,9 +80,9 @@ class AdminCog(BaseCog):
         """Called when bot leaves a guild."""
         await self.send_log(f"Left guild {guild.name}", channel_id=self.GUILD_HISTORY_CHANNEL)
 
-    async def _change_activity(self, activity_name: str) -> None:
-        activity = discord.Game(activity_name)
-        await self.bot.change_presence(activity=activity)
+    async def _change_activity(self, activity: str) -> None:
+        ac = discord.Game(activity)
+        await self.bot.change_presence(activity=ac)
 
     @commands.command(name="serverlist")
     @admins_only()
