@@ -2,7 +2,7 @@ import json
 from typing import Any, Union
 
 
-def load_json(fp: str, default_factory:Union[list, dict]=list, encoding="utf-8") -> Union[list, dict]:
+def load_json(fp: str, default_factory:Union[list, dict]=dict, encoding="utf-8") -> Union[list, dict]:
     with open(fp, "r", encoding=encoding) as f:
         try:
             r = json.load(f)
