@@ -14,24 +14,30 @@ from utils.caching import get_cached
 CONF = "DGVGK/minecraft.json"
 HOME_COORDINATES = (-600, 80, 650)
 
+
 class MinecraftCog(BaseCog):
     """Minecraft Commands."""
 
     EMOJI = "<:mc:639190697186164756>"
-    
+    FILES = [POI_FILE]
+
+    def __init__(self, bot: commands.Bot) -> None:
+        super().__init__(bot)
+        self.poi = get_cached(POI_FILE)
+
     def _get_mc_server(self) -> mcstatus.MinecraftServer:
         return mcstatus.MinecraftServer(MC_SERVER_IP, MC_SERVER_PORT)
-    
-    def _get_server_attr(self, attr: str) -> None: # cba proper type hints rn
+
+    def _get_server_attr(self, attr: str) -> None:  # cba proper type hints rn
         server = self._get_mc_server()
         try:
             attr = getattr(server, attr)
             r = attr()
-        except (AttributeError, socket.gaierror, socket.timeout): # lazy
+        except (AttributeError, socket.gaierror, socket.timeout):  # lazy
             raise CommandError("Unable to connect to server")
         else:
             return r
-    
+
     async def get_server_status(self) -> mcstatus.pinger.PingResponse:
         return self._get_server_attr("status")
 
@@ -49,11 +55,11 @@ class MinecraftCog(BaseCog):
         """Online players on the server."""
         status = await self.get_server_status()
         players = status.players.sample
-       
+
         # Since mcstatus is a piece of trash, we have to do this
         if not players:
             return await ctx.send("No players are currently online")
-        
+
         msg_body = "\n".join([player.name for player in players])
         await self.send_embed_message(ctx, title="Players Online", description=msg_body)
 
@@ -62,19 +68,19 @@ class MinecraftCog(BaseCog):
         """Active plugins on the server."""
         query = await self.query_server()
         plugins = query.software.plugins
-        
+
         if not plugins:
             return await ctx.send("Server has no active plugins.")
-        
+
         msg_body = "\n".join([plugin for plugin in plugins])
         await self.send_embed_message(ctx, title="Active Plugins", description=msg_body)
-    
+
     @mc.command(name="home", aliases=["base"])
     async def home_coordinates(self, ctx: commands.Context) -> None:
         """Coordinates of home base."""
         x, y, z = HOME_COORDINATES
         await ctx.send(f"X: {x} / Y: {y} / Z: {z}")
-    
+
     async def server_status_str(self) -> str:
         """Unused rn. Pending removal tbqh"""
         try:
@@ -85,7 +91,7 @@ class MinecraftCog(BaseCog):
             online = True
 
         status = "ONLINE ✅" if online else "OFFLINE ❌"
-        
+
         return f"Minecraft: {status}"
 
     async def n_players_online(self) -> str:
