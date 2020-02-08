@@ -104,7 +104,7 @@ class MinecraftCog(BaseCog):
     def _dump_poi(self, poi: dict) -> None:
         dump_json(POI_FILE, poi)
 
-    async def _post_pois(self, title: str, pois: str) -> None:
+    async def _post_pois(self, ctx: commands.Context, title: str, pois: str) -> None:
         await self.send_embed_message(
             ctx, title=f"{title} (XYZ)", description=pois)
 
