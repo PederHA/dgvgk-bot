@@ -104,6 +104,11 @@ class MinecraftCog(BaseCog):
     def _dump_poi(self, poi: dict) -> None:
         dump_json(POI_FILE, poi)
 
+    async def _post_pois(self, title: str, pois: str) -> None:
+        await self.send_embed_message(
+            ctx, title=f"{title} (XYZ)", description=pois)
+
+
     @commands.group(name="poi")
     async def poi(self, ctx: commands.Context) -> None:
         """Points of Interest."""  
@@ -126,6 +131,17 @@ class MinecraftCog(BaseCog):
                     "No Points of Interests have been added! "
                     f"Try adding one with `{self.bot.command_prefix}poi add`."
                 )
+
+    @poi.command(name="get")
+    async def poi_get(self, ctx: commands.Context, *location) -> None:
+        """Unfinished idk."""
+        poi = self._get_poi()
+        location = " ".join(location).lower()
+        
+        if location in poi:
+            p = poi[location]
+        
+
 
     @poi.command(name="add")
     async def poi_add(self, ctx: commands.Context, location: str, x: float, y: float, z: float) -> None:
