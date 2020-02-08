@@ -8,6 +8,7 @@ from cogs.admin_cog import AdminCog
 from cogs.mc_cog import MinecraftCog
 from cogs.stats_cog import StatsCog
 from cogs.user_cog import UserCog
+from cogs.vote_cog import VoteCog
 
 
 # List of all cogs in the local namespace
