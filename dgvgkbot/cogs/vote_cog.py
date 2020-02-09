@@ -1,8 +1,7 @@
 import inspect
 import subprocess
 from datetime import datetime
-from functools import partial  # !!!!
-from typing import Callable, Dict
+from typing import Dict
 
 import discord
 from discord.ext import commands
@@ -107,10 +106,6 @@ class Vote:
         """Performs action. Subclasses need to define this method."""
         raise NotImplementedError
 
-    async def can_do_action(self) -> None:
-        """Check if sufficient votes are reached and that an action is defined."""
-        return await self.check_votes() and self.action
-
 
 class VoteServerStart(Vote):
     ACTION_MSG = "Starting server..."
@@ -152,8 +147,7 @@ class VoteCog(BaseCog):
         if not self.votes.get("start"):
             self.votes["start"] = VoteServerStart(threshold=2,
                                                   duration=300.0, 
-                                                  bot=self.bot
-                                                 )
+                                                  bot=self.bot)
         await self.votes["start"].add_vote(ctx)
     
     @vote.command(name="stop", aliases=["terminate", "shutdown"])
@@ -161,7 +155,6 @@ class VoteCog(BaseCog):
         if not self.votes.get("stop"):
             self.votes["stop"] = VoteServerStop(threshold=3, 
                                                 duration=300.0, 
-                                                bot=self.bot
-                                               )
+                                                bot=self.bot)
         await self.votes["stop"].add_vote(ctx)
 
