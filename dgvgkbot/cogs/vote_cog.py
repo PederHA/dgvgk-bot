@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import subprocess
 from datetime import datetime
@@ -11,16 +12,23 @@ from utils.exceptions import CommandError
 
 
 class Vote:
+    """Sort of unused atm."""
+    def __init__(self, ctx: commands.Context) -> None:
+        self.voter: discord.Member = ctx.message.author
+        self.time: datetime = ctx.message.created_at
+
+
+class VotingSession:
     """Represents a voting session."""
     
     ACTION_MSG = ""
     SUCCESS_MSG = ""
     FAIL_MSG = ""
     
-    def __init__(self, 
+    def __init__(self,
+                 ctx: commands.Context,
                  threshold: int, 
                  duration: float,
-                 bot: commands.Bot,
                 ) -> None:
         """
         Parameters
@@ -32,17 +40,21 @@ class Vote:
         bot : `commands.Bot`
             Discord Bot instance
         """
-        self.reset()     
         self.threshold = threshold
         self.duration = duration
-        self.bot = bot
+        self.bot: commands.Bot = ctx.bot
+        self.ctx: commands.Context = ctx
+        self.loop: asyncio.Task = None
+        self.reset() 
         # TODO: Add superuser vote weighting
         #       Add superuser supervote (triggers action)
     
     def reset(self) -> None:
-        """Initializes voting session."""
+        """Resets voting session."""
         self.start = datetime.now()
-        self.votes = {}
+        self.votes: Dict[int, Vote] = {}
+        if self.loop:
+            self.bot.loop.create_task(self.stop_loop())
 
     @property
     def remaining(self) -> int:
@@ -55,13 +67,30 @@ class Vote:
     @property
     def elapsed(self) -> float:
         return (datetime.now() - self.start).total_seconds()
-    
+
+    async def start_loop(self) -> None:
+        self.loop = self.bot.loop.create_task(self.sessionloop())
+
+    async def stop_loop(self) -> None:
+        if not self.loop:
+            raise AttributeError("No session loop is active.")
+        self.loop.cancel()
+
+    async def sessionloop(self, interval: int=10) -> None:
+        """Periodically checks if voting session is still active."""
+        while True:
+            if self.elapsed > self.duration:
+                await self.ctx.send("Voting session ended. Not enough votes.")
+                self.reset()
+            await asyncio.sleep(interval)
+
     async def check_votes(self) -> bool:
         """Checks if sufficient votes are reached."""
         return len(self.votes) >= self.threshold    
     
-    async def add_vote(self, ctx: commands.Context, action: bool=True) -> None:
+    async def add_vote(self, ctx: commands.Context) -> None:
         """Adds a vote. Performs action if enough votes are cast."""
+        # Add vote
         if self.elapsed < self.duration: # Check if voting session is active
             if not await self._vote_exists(ctx):
                 await self._add_vote(ctx)
@@ -71,9 +100,14 @@ class Vote:
             self.reset() # reset voting session
             await self._add_vote(ctx)
 
+        # Start voting session loop
+        if not self.loop:
+            await self.start_loop()
+
+        # Check if enough votes 
         if await self.check_votes():
             try:
-                await ctx.send(self.ACTION_MSG)
+                await ctx.send(f"Sufficient votes received!\n{self.ACTION_MSG}")
                 await self.action()
             except:
                 await ctx.send(self.FAIL_MSG)
@@ -81,10 +115,11 @@ class Vote:
             else:
                 await ctx.send(self.SUCCESS_MSG)
         else:
-            await ctx.send(f"Vote added! {self.remaining} more votes are required.")
+            s = "s are" if self.remaining > 1 else " is"
+            await ctx.send(f"Vote added! {self.remaining} more vote{s} required.")
 
     async def _add_vote(self, ctx: commands.Context) -> None:
-        self.votes[ctx.message.author.id] = ctx.message.author
+        self.votes[ctx.message.author.id] = Vote(ctx)
 
     async def _vote_exists(self, ctx: commands.Context) -> bool:
         """Check if voter has already voted. 
@@ -107,7 +142,7 @@ class Vote:
         raise NotImplementedError
 
 
-class VoteServerStart(Vote):
+class VoteServerStart(VotingSession):
     ACTION_MSG = "Starting server..."
     SUCCESS_MSG = "Server started."
     FAIL_MSG = "Failed to start server."
@@ -118,7 +153,7 @@ class VoteServerStart(Vote):
         # param check raises exception if non-0 exit code
     
 
-class VoteServerStop(Vote):
+class VoteServerStop(VotingSession):
     ACTION_MSG = "Stopping server..."
     SUCCESS_MSG = "Server stopped."
     FAIL_MSG = "Failed to stop server. Is the server already down?"
@@ -131,11 +166,11 @@ class VoteServerStop(Vote):
 class VoteCog(BaseCog):
     """Voting Commands."""
 
-    EMOJI = "<:mc:639190697186164756>"
+    EMOJI = ":put_litter_in_its_place:"
 
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__(bot)
-        self.votes: Dict[str, Vote] = {}
+        self.votes: Dict[str, VotingSession] = {}
 
     @commands.group(name="vote")
     async def vote(self, ctx: commands.Context) -> None:
@@ -144,17 +179,18 @@ class VoteCog(BaseCog):
     
     @vote.command(name="start", aliases=["boot", "launch"])
     async def start(self, ctx: commands.Context) -> None:
+        """Vote to start the MC server."""
         if not self.votes.get("start"):
-            self.votes["start"] = VoteServerStart(threshold=2,
-                                                  duration=300.0, 
-                                                  bot=self.bot)
+            self.votes["start"] = VoteServerStart(ctx,
+                                                  threshold=2,
+                                                  duration=300.0)
         await self.votes["start"].add_vote(ctx)
     
     @vote.command(name="stop", aliases=["terminate", "shutdown"])
-    async def close(self, ctx: commands.Context) -> None:
+    async def stop(self, ctx: commands.Context) -> None:
+        """Vote to stop the MC server."""
         if not self.votes.get("stop"):
-            self.votes["stop"] = VoteServerStop(threshold=3, 
-                                                duration=300.0, 
-                                                bot=self.bot)
+            self.votes["stop"] = VoteServerStop(ctx,
+                                                threshold=3, 
+                                                duration=300.0)
         await self.votes["stop"].add_vote(ctx)
-
