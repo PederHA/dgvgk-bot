@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import subprocess
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from typing import Dict
 
@@ -18,7 +19,7 @@ class Vote:
         self.time: datetime = ctx.message.created_at
 
 
-class VotingSession:
+class VotingSession(metaclass=ABCMeta):
     """Represents a voting session."""
     
     ACTION_MSG = ""
@@ -137,9 +138,10 @@ class VotingSession:
             )
         return ctx.message.author.id in self.votes
 
+    @abstractmethod
     async def action(self) -> None:
         """Performs action. Subclasses need to define this method."""
-        raise NotImplementedError
+        ...
 
 
 class VoteServerStart(VotingSession):
