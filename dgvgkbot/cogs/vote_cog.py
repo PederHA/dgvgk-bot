@@ -105,22 +105,26 @@ class VotingSession(metaclass=ABCMeta):
         if not self.loop:
             await self.start_loop()
 
-        # Check if enough votes 
+        # Run action if enough votes
         if await self.check_votes():
-            try:
-                await ctx.send(f"Sufficient votes received!\n{self.ACTION_MSG}")
-                await self.action()
-            except:
-                await ctx.send(self.FAIL_MSG)
-                raise
-            else:
-                await ctx.send(self.SUCCESS_MSG)
+            await ctx.send(f"Sufficient votes received!") # NOTE: remove?
+            await self._do_action(ctx)
         else:
             s = "s are" if self.remaining > 1 else " is"
             await ctx.send(f"Vote added! {self.remaining} more vote{s} required.")
 
     async def _add_vote(self, ctx: commands.Context) -> None:
         self.votes[ctx.message.author.id] = Vote(ctx)
+
+    async def _do_action(self, ctx: commands.Context) -> None:
+        """Tries to perform action. Runs cleanup if action fails."""
+        try:
+            await self.action_start(ctx)
+        except:
+            await self.action_failed(ctx)
+            raise # Raise original exception so exception handler can catch it
+        else:
+            await self.action_finished(ctx)
 
     async def _vote_exists(self, ctx: commands.Context) -> bool:
         """Check if voter has already voted. 
@@ -139,30 +143,53 @@ class VotingSession(metaclass=ABCMeta):
         return ctx.message.author.id in self.votes
 
     @abstractmethod
-    async def action(self) -> None:
+    async def action_start(self, ctx) -> None:
         """Performs action. Subclasses need to define this method."""
         ...
 
+    @abstractmethod
+    async def action_finished(self, ctx: commands.Context) -> None:
+        """Defines what to do when action has successfully completed."""
+        ...
+
+    @abstractmethod
+    async def action_failed(self, ctx: commands.Context) -> None:
+        """Defines behavior when action fails. Cleanup etc. should be performed here."""
+        ...
+
+    async def action_cancel(self, ctx: commands.Context) -> None:
+        """Optional method to cancel action. (Canceling NYI.) """
+        raise NotImplementedError
+
 
 class VoteServerStart(VotingSession):
-    ACTION_MSG = "Starting server..."
-    SUCCESS_MSG = "Server started."
-    FAIL_MSG = "Failed to start server."
-
-    async def action(self) -> None:
+    async def action_start(self, ctx: commands.Context) -> None:
         """Starts Minecraft server."""
-        r = subprocess.run(["immortalctl", "start", "mcserver"], check=True) 
+        await ctx.send("Sufficient votes received! Starting Minecraft server...")
+        # self.msg = msg
+        # delete message afterwards... 
+        subprocess.run(["immortalctl", "start", "mcserver"], check=True) 
         # param check raises exception if non-0 exit code
+
+    async def action_finished(self, ctx: commands.Context) -> None:
+        await ctx.send("Started Minecraft server!")
     
+    async def action_failed(self, ctx: commands.Context) -> None:
+        await ctx.send("Failed to start server.")
+
 
 class VoteServerStop(VotingSession):
-    ACTION_MSG = "Stopping server..."
-    SUCCESS_MSG = "Server stopped."
-    FAIL_MSG = "Failed to stop server. Is the server already down?"
-
-    async def action(self) -> None:
+    async def action_start(self, ctx: commands.Context) -> None:
         """Stops Minecraft server."""
-        r = subprocess.run(["immortalctl", "stop", "mcserver"], check=True)
+        await ctx.send("Stopping Minecraft server...")
+        subprocess.run(["immortalctl", "stop", "mcserver"], check=True)
+
+    async def action_finished(self, ctx: commands.Context) -> None:
+        await ctx.send("Minecraft server stopped.")
+
+    async def action_failed(self, ctx: commands.Context) -> None:
+        await ctx.send("Failed to stop server. Is the server already down?")
+        # cleanup?
 
 
 class VoteCog(BaseCog):
