@@ -21,11 +21,7 @@ class Vote:
 
 class VotingSession(metaclass=ABCMeta):
     """Represents a voting session."""
-    
-    ACTION_MSG = ""
-    SUCCESS_MSG = ""
-    FAIL_MSG = ""
-    
+
     def __init__(self,
                  ctx: commands.Context,
                  threshold: int, 
