@@ -4,25 +4,21 @@ import discord
 from discord.ext import commands
 import mcstatus
 
-from cogs.base_cog import BaseCog
-from config import MC_SERVER_IP, MC_SERVER_PORT
-from utils.converters import IPAddressConverter
-from utils.exceptions import CommandError
-from utils.serialize import dump_json, load_json
+from .base_cog import BaseCog
+from ..utils.converters import IPAddressConverter
+from ..utils.exceptions import CommandError
+from ..utils.serialize import dump_json, load_json
 
-CONF = "DGVGK/minecraft.json"
-POI_FILE = "minecraft/poi.json"
-HOME_COORDINATES = (-600, 80, 650)
+
 
 
 class MinecraftCog(BaseCog):
     """Minecraft Commands."""
 
     EMOJI = "<:mc:639190697186164756>"
-    FILES = [POI_FILE]
 
     def _get_mc_server(self) -> mcstatus.MinecraftServer:
-        return mcstatus.MinecraftServer(MC_SERVER_IP, MC_SERVER_PORT)
+        return mcstatus.MinecraftServer(self.bot.config["minecraft"]["ip"], self.bot.config["minecraft"]["port"])
 
     def _get_server_attr(self, attr: str) -> None:  # cba proper type hints rn
         server = self._get_mc_server()
@@ -74,7 +70,7 @@ class MinecraftCog(BaseCog):
     @mc.command(name="home", aliases=["base"])
     async def home_coordinates(self, ctx: commands.Context) -> None:
         """Coordinates of home base."""
-        x, y, z = HOME_COORDINATES
+        x, y, z = HOME_COORDINATES # TODO: FIX
         await ctx.send(f"X: {x} / Y: {y} / Z: {z}")
 
     async def server_status_str(self) -> str:
@@ -107,7 +103,6 @@ class MinecraftCog(BaseCog):
     async def _post_pois(self, ctx: commands.Context, title: str, pois: str) -> None:
         await self.send_embed_message(
             ctx, title=f"{title} (XYZ)", description=pois)
-
 
     @commands.group(name="poi")
     async def poi(self, ctx: commands.Context) -> None:

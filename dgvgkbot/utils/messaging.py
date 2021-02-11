@@ -6,8 +6,7 @@ from typing import Any, Iterable
 import discord
 from discord.ext import commands
 
-from config import YES_ARGS
-from utils.exceptions import CommandError
+from .exceptions import CommandError
 
 
 async def get_user_reply(ctx: commands.Context,
@@ -36,7 +35,7 @@ async def ask_user(ctx: commands.Context,
                               timeout_msg: str=None,
                               show_no: bool=False) -> bool:
     if not options:
-        options = YES_ARGS
+        options = ctx.bot.config["args"]["yes"]
 
     _opts = []
     for opt in options:
@@ -54,7 +53,7 @@ async def ask_user(ctx: commands.Context,
 
 
 async def ask_user_yes_no(ctx: commands.Context, msg: str) -> bool:
-    return await ask_user(ctx, msg, YES_ARGS, show_no=True)
+    return await ask_user(ctx, msg, ctx.bot.config["args"]["yes"], show_no=True)
 
 
 async def fetch_message(ctx: commands.Context, message_id: int) -> discord.Message:

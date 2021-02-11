@@ -6,10 +6,9 @@ import discord
 import psutil
 from discord.ext import commands
 
-from cogs.base_cog import BaseCog, EmbedField
-from config import AUTHOR_MENTION, YES_ARGS
-from utils.converters import BoolConverter
-from utils.exceptions import CategoryError, CogError, CommandError
+from .base_cog import BaseCog, EmbedField
+from ..utils.converters import BoolConverter
+from ..utils.exceptions import CategoryError, CogError, CommandError
 
 
 class UserCog(BaseCog):
@@ -182,7 +181,7 @@ class UserCog(BaseCog):
 
         p = self.bot.command_prefix
         fields = [
-            EmbedField(name="Owner", value=AUTHOR_MENTION),
+            EmbedField(name="Owner", value=self.bot.config["AUTHOR_MENTION"]),
             EmbedField(name="Running on", value=f"<:python:570331647933677590> Python {sys.version.split(' ')[0]}"),
             EmbedField(name="Command categories", value=len(await self.get_cogs())),
             EmbedField(name="Useful commands", value=f"`{p}help`, `{p}commands`, `{p}categories`, `{p}changelog`"),

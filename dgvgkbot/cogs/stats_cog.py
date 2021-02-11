@@ -12,16 +12,14 @@ from typing import List, Union, Dict, Tuple, Optional
 import discord
 from discord.ext import commands, tasks
 
-from cogs.base_cog import BaseCog
-from config import STATS_DIR
-from utils.caching import get_cached
-from utils.checks import owners_only
-from utils.converters import UserOrMeConverter
-from utils.exceptions import CommandError
-from utils.datetimeutils import format_time_difference
+from .base_cog import BaseCog
+from ..utils.caching import get_cached
+from ..utils.checks import owners_only
+from ..utils.converters import UserOrMeConverter
+from ..utils.exceptions import CommandError
+from ..utils.datetimeutils import format_time_difference
 
 
-GUILD_STATS_PATH = f"{STATS_DIR}/guilds.pkl"
 
 @dataclass
 class DiscordCommand:
@@ -101,10 +99,12 @@ class StatsCog(BaseCog):
     """Commands and methods for gathering bot statistics."""
 
     EMOJI = ":chart_with_upwards_trend:"
-    DIRS = [STATS_DIR]
-    FILES = [GUILD_STATS_PATH]
 
     def __init__(self, bot: commands.Bot) -> None:
+        self.statsfile = bot.config["paths"]["statsdir"] / "guilds.pkl"
+        self.DIRS = [self.statsfile.parent]
+        self.FILES = [self.statsfile]
+        
         super().__init__(bot)
         self.bot.start_time = datetime.now()
         self.guilds = self.load_guilds()
@@ -115,7 +115,7 @@ class StatsCog(BaseCog):
     
     def dump_guilds(self) -> None:
         """Save guild usage statistics."""
-        with open(GUILD_STATS_PATH, "wb") as f:
+        with open(self.statsfile, "wb") as f:
             pickle.dump(self.guilds, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     async def _do_dump(self) -> None:
@@ -143,7 +143,7 @@ class StatsCog(BaseCog):
 
     def load_guilds(self) -> Dict[int, DiscordGuild]:
         """Load guild statistics. Only performed on bot startup."""
-        with open(GUILD_STATS_PATH, "rb") as f:
+        with open(self.statsfile, "rb") as f:
             try:
                 return pickle.load(f)
             except EOFError:
@@ -152,7 +152,7 @@ class StatsCog(BaseCog):
                 # Create backup if file isn't empty
                 contents = f.read()
                 if contents != {}:
-                    with open(f"{GUILD_STATS_PATH}_{time_ns()}.bak", "wb") as backup:
+                    with open(f"{self.statsfile}_{time_ns()}.bak", "wb") as backup:
                         backup.write(contents)
                 return {}
 

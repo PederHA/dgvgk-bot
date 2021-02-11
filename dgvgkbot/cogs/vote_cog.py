@@ -8,8 +8,8 @@ from typing import Dict
 import discord
 from discord.ext import commands
 
-from cogs.base_cog import BaseCog
-from utils.exceptions import CommandError
+from ..cogs.base_cog import BaseCog
+from ..utils.exceptions import CommandError
 
 
 class Vote:

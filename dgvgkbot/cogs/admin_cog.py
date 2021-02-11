@@ -11,10 +11,9 @@ from typing import Optional, Union, Awaitable, Callable
 import discord
 from discord.ext import commands
 
-from cogs.base_cog import BaseCog, EmbedField
-from config import TRUSTED_DIR, TRUSTED_PATH, YES_ARGS
-from utils.checks import admins_only
-from utils.exceptions import CommandError
+from .base_cog import BaseCog, EmbedField
+from ..utils.checks import admins_only
+from ..utils.exceptions import CommandError
 
 
 
@@ -37,8 +36,6 @@ class Activity:
 
 class AdminCog(BaseCog):
     """Admin commands for administering guild-related bot functionality."""
-    
-    FILES = [TRUSTED_PATH]
 
     # Activity rotation stuff
     ACTIVITY_ROTATION = True
@@ -73,12 +70,12 @@ class AdminCog(BaseCog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
         """Called when bot joins a guild."""
-        await self.send_log(f"Joined guild {guild.name}", channel_id=self.GUILD_HISTORY_CHANNEL)
+        await self.send_log(f"Joined guild {guild.name}", channel_id=self.bot.config["channels"]["history"])
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         """Called when bot leaves a guild."""
-        await self.send_log(f"Left guild {guild.name}", channel_id=self.GUILD_HISTORY_CHANNEL)
+        await self.send_log(f"Left guild {guild.name}", channel_id=self.bot.config["channels"]["history"])
 
     async def _change_activity(self, activity: str) -> None:
         ac = discord.Game(activity)
@@ -144,7 +141,7 @@ class AdminCog(BaseCog):
         for guild in guilds:
             channel = guild.text_channels[0]
             try:
-                await channel.send(message)
+                await channel.send(msg)
             except:
                 # CBA spamming log channel with every message attempt
                 print(f"Failed to send message to guild {guild.name}")

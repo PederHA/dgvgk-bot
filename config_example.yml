@@ -1,0 +1,47 @@
+version: "4.2.0"
+
+discord:
+  client_id:
+  secret: 
+  token: 
+  dev_token: 
+
+minecraft:
+  ip: "127.0.0.1"
+  port: 25565
+
+# directories and file paths
+paths:
+  dbdir: &dbdir !path ["db"]
+  blacklistfile: !path [*dbdir, "blacklist.json"] # e.g. dbdir/blacklist.json
+  trusteddir: &trusteddir !path [*dbdir, "trusted"] 
+  trustedfile: !path [*trusteddir, "trusted.json"]
+  statsdir: !path [*dbdir, "stats"]
+
+downloads:
+  max_size: 25000000 # 25 MB
+  allowed: true
+
+guilds:
+  test: 340921036201525248
+  dgvgk: 178865018031439872
+  pfm: 133332608296681472
+
+channels:
+  images: 549649397420392567
+  logs: 340921036201525248
+  errors: 604388280200593411
+  downloads: 563312629045788692
+  history: 565674480660119592
+  commands: 584386122004561920
+
+users:
+  owner_id: &owner_id 103890994440728576
+  mention: !join ["<@", *owner_id, ">"]
+
+args:
+  # "yes" and "no" keys must be coerced into str, or else they get parsed 
+  # as True and False by PyYAML. Yes, really.
+  "yes": ["y", "yes", "+", "ja", "si", "True", "true"]
+  "no": ["n", "no", "-", "nei", "False", "false"]
+  all: ["all", "everyone", "global"]
