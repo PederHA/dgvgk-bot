@@ -8,7 +8,6 @@ with suppress(ImportError):
 
 from discord.ext.commands import Bot, Cog, Command
 
-from .botsecrets import BOT_TOKEN
 from .cogs import COGS
 from .config import load
 from .utils.patching.commands import patch_command_signature
