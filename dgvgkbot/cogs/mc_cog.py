@@ -1,9 +1,11 @@
 import socket
+from typing import Optional, Any
 
 import discord
 from discord.ext import commands
 import mcstatus
 import httpx
+from httpcore._exceptions import ConnectError, ConnectTimeout
 
 from .base_cog import BaseCog
 from ..utils.converters import IPAddressConverter
@@ -17,11 +19,34 @@ class MinecraftCog(BaseCog):
     """Minecraft Commands."""
 
     EMOJI = "<:mc:639190697186164756>"
+    
+    @commands.Cog.listener()
+    async def on_ready(self) -> None:
+        last_ip = await self.bot.db.get_last_ip()
+        current_ip = await self._get_ip()
+        if current_ip is None: # can't connect
+            # TODO: Warn that server is down
+            return
+        
+        if last_ip != current_ip:
+            await self.bot.db.save_last_ip(current_ip)
+            channel = self.bot.get_channel(self.bot.config["channels"]["mc"])
+            await channel.send(current_ip)
+        
+    async def _get_ip(self) -> Optional[str]:
+        try:
+            r = httpx.get("http://mcserver:4040/api/tunnels")
+            d = r.json()
+            url = d["tunnels"][0]["public_url"].split("tcp://")[1]   
+        except (ConnectError, ConnectTimeout):
+            return None
+        else:
+            return url
 
     def _get_mc_server(self) -> mcstatus.MinecraftServer:
         return mcstatus.MinecraftServer(self.bot.config["minecraft"]["ip"], self.bot.config["minecraft"]["port"])
 
-    def _get_server_attr(self, attr: str) -> None:  # cba proper type hints rn
+    def _get_server_attr(self, attr: str) -> Any:  # cba proper type hints rn
         server = self._get_mc_server()
         try:
             attr = getattr(server, attr)
@@ -40,13 +65,11 @@ class MinecraftCog(BaseCog):
     @commands.command(name="getip")
     async def getip(self, ctx: commands.Context) -> None:
         try:
-            r = httpx.get("http://mcserver:4040/api/tunnels")
-            d = r.json()
-            url = d["tunnels"][0]["public_url"].split("tcp://")[1]
+            ip = await self._get_ip()
         except Exception as e:
             # TODO: fix the mess that is exception logging
             raise CommandError("Unable to contact Minecraft server.")
-        await ctx.send(url)
+        await ctx.send(ip)
 
     @commands.group(name="mc")
     async def mc(self, ctx: commands.Context) -> None:
@@ -82,8 +105,8 @@ class MinecraftCog(BaseCog):
     @mc.command(name="home", aliases=["base"])
     async def home_coordinates(self, ctx: commands.Context) -> None:
         """Coordinates of home base."""
-        x, y, z = HOME_COORDINATES # TODO: FIX
-        await ctx.send(f"X: {x} / Y: {y} / Z: {z}")
+        coords = await self.bot.db.get_home_coordinates()
+        await ctx.send(f"X: {coords.x} / Y: {coords.y} / Z: {coords.z}")
 
     async def server_status_str(self) -> str:
         """Unused rn. Pending removal tbqh"""
