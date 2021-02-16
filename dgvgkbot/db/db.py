@@ -1,13 +1,13 @@
 """
 Not technically cog, but who's gonna fucking arrest me, huh?
 """
+from __future__ import annotations
 
 import asyncio
 import random
 import sqlite3
 from typing import Tuple, List, Dict, Callable, Any, Iterable, Optional
 from dataclasses import dataclass
-from __future__ import annotations
 
 import discord
 from discord.ext import commands
