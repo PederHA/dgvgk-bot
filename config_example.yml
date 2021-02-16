@@ -7,8 +7,11 @@ discord:
   dev_token: 
 
 minecraft:
-  ip: "127.0.0.1"
-  port: 25565
+  servers:
+    - name: dgvgk
+      ip: "127.0.0.1"
+      port: 25565
+      hostname: mcserver # for docker
 
 # directories and file paths
 paths:

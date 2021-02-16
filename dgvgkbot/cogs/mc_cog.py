@@ -3,6 +3,7 @@ import socket
 import discord
 from discord.ext import commands
 import mcstatus
+import httpx
 
 from .base_cog import BaseCog
 from ..utils.converters import IPAddressConverter
@@ -35,6 +36,17 @@ class MinecraftCog(BaseCog):
 
     async def query_server(self) -> mcstatus.querier.QueryResponse:
         return self._get_server_attr("query")
+
+    @commands.command(name="getip")
+    async def getip(self, ctx: commands.Context) -> None:
+        try:
+            r = httpx.get("http://mcserver:4040/api/tunnels")
+            d = r.json()
+            url = d["tunnels"][0]["public_url"].split("tcp://")[1]
+        except Exception as e:
+            # TODO: fix the mess that is exception logging
+            raise CommandError("Unable to contact Minecraft server.")
+        await ctx.send(url)
 
     @commands.group(name="mc")
     async def mc(self, ctx: commands.Context) -> None:
