@@ -7,7 +7,7 @@ authors = ["PederHA <peder.andresen@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 psutil = "^5.6.7"
-httpx = "^0.13.3"
+httpx = "^0.23.0"
 recordclass = "^0.13.2"
 ciso8601 = "^2.1.3"
 mcstatus = "^2.3.0"
